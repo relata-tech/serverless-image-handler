@@ -1,3 +1,9 @@
+# Why this fork?
+Implement caching in S3 to reduce lambda compute costs. Referencing: https://github.com/aws-solutions/serverless-image-handler/issues/304 By default going to enable all of these caching techniques and add the caching technique of storing in S3. 
+To implement caching of an image in S3 after it has been generated and resized using Sharp, you can follow these steps:
+1. Modify the Image Handler to Save Processed Images to S3: After processing the image, save the processed image back to the S3 bucket with a unique key that represents the transformation applied.
+2. Check for Cached Images Before Processing: Before processing an image, check if the processed image already exists in the S3 bucket. If it does, return the cached image instead of reprocessing it.
+
 **[Serverless Image Handler](https://aws.amazon.com/solutions/implementations/serverless-image-handler/)** | **[🚧 Feature request](https://github.com/aws-solutions/serverless-image-handler/issues/new?assignees=&labels=enhancement&template=feature_request.md&title=)** | **[🐛 Bug Report](https://github.com/aws-solutions/serverless-image-handler/issues/new?assignees=&labels=bug&template=bug_report.md&title=)** | **[❓ General Question](https://github.com/aws-solutions/serverless-image-handler/issues/new?assignees=&labels=question&template=general_question.md&title=)**
 
 **Note**: If you want to use the solution without building from source, navigate to [Solution Landing Page](https://aws.amazon.com/solutions/implementations/serverless-image-handler/).
