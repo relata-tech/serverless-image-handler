@@ -20,7 +20,7 @@ import { Policy, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
-import { IBucket } from "aws-cdk-lib/aws-s3";
+import { IBucket, Bucket } from "aws-cdk-lib/aws-s3";
 import { ArnFormat, Aws, Duration, Lazy, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { CloudFrontToApiGatewayToLambda } from "@aws-solutions-constructs/aws-cloudfront-apigateway-lambda";
@@ -167,7 +167,9 @@ export class BackEnd extends Construct {
     );
 
     // Add S3 origin
-    const s3Origin = new S3Origin(props.sourceBuckets[0]);
+    // Reference an existing S3 bucket by its name
+    const existingBucket = Bucket.fromBucketName(this, 'ExistingBucket', props.sourceBuckets[0]);
+    const s3Origin = new S3Origin(existingBucket);
 
     // Add API Gateway origin
     const apiGatewayOrigin: IOrigin = new HttpOrigin(`${apiGatewayRestApi.restApiId}.execute-api.${Aws.REGION}.amazonaws.com`, {
