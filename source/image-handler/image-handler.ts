@@ -115,6 +115,13 @@ export class ImageHandler {
         // convert to base64 encoded string
         const imageBuffer = await modifiedImage.toBuffer();
         base64EncodedImage = imageBuffer.toString("base64");
+        this.s3Client.putObject({
+            Bucket: imageRequestInfo.bucket,
+            Key: imageRequestInfo.base64String,
+            Body: imageBuffer,
+            ContentType: imageRequestInfo.contentType,
+            CacheControl: imageRequestInfo.cacheControl,
+        }).promise();
       } else {
         // no edits or output format changes, convert to base64 encoded image
         base64EncodedImage = originalImage.toString("base64");

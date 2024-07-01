@@ -150,13 +150,13 @@ export class BackEnd extends Construct {
       minTtl: Duration.seconds(1),
       maxTtl: Duration.days(365),
       enableAcceptEncodingGzip: false,
-      headerBehavior: CacheHeaderBehavior.allowList("origin", "accept"),
+      headerBehavior: CacheHeaderBehavior.allowList("origin"),
       queryStringBehavior: CacheQueryStringBehavior.allowList("signature"),
     });
 
     const originRequestPolicy = new OriginRequestPolicy(this, "OriginRequestPolicy", {
       originRequestPolicyName: `ServerlessImageHandler-${props.uuid}`,
-      headerBehavior: CacheHeaderBehavior.allowList("origin", "accept"),
+      headerBehavior: CacheHeaderBehavior.allowList("origin"),
       queryStringBehavior: CacheQueryStringBehavior.allowList("signature"),
     });
 
@@ -190,7 +190,7 @@ export class BackEnd extends Construct {
     const cloudFrontDistributionProps: DistributionProps = {
       comment: "Image Handler Distribution for Serverless Image Handler",
       defaultBehavior: {
-        origin,
+        origin: originGroup,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
         viewerProtocolPolicy: ViewerProtocolPolicy.HTTPS_ONLY,
         originRequestPolicy,
@@ -207,6 +207,10 @@ export class BackEnd extends Construct {
         { httpStatus: 503, ttl: Duration.minutes(10) },
         { httpStatus: 504, ttl: Duration.minutes(10) },
       ],
+       originShield: {
+        enabled: true,
+        region: Aws.REGION, // Set the appropriate region for Origin Shield
+      },
     };
 
     const logGroupProps = {
