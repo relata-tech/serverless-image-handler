@@ -105,9 +105,6 @@ export class ImageRequest {
       imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType, imageRequestInfo.bucket);
       imageRequestInfo.edits = this.parseImageEdits(event, imageRequestInfo.requestType);
 
-      // Sort the edits JSON to ensure consistent hash key
-      imageRequestInfo.edits = this.sortObject(imageRequestInfo.edits);
-
       // Generate the hash key for the processed image
       const processedKey = this.generateHashKey(imageRequestInfo);
 
@@ -165,7 +162,7 @@ export class ImageRequest {
   // also collisions are not a concern here bc this is appended to the key
   private generateHashKey(imageRequestInfo: ImageRequestInfo): string {
     const { bucket, requestType, edits } = imageRequestInfo;
-    const combinedString = JSON.stringify({ bucket, requestType, edits });
+    const combinedString = JSON.stringify({ bucket, requestType, edits: this.sortObject(edits) });
     const hash = createHash('md5').update(combinedString).digest('hex');
     const processedKey = `${imageRequestInfo.key}-${hash}`
     return processedKey

@@ -106,8 +106,7 @@ export class ImageHandler {
       const imageBuffer = await modifiedImage.toBuffer();
       base64EncodedImage = imageBuffer.toString("base64");
       // Save the processed image back to S3
-      const hash = createHash('md5').update(JSON.stringify(edits)).digest('hex');
-      const processedKey = `${imageRequestInfo.key}-${hash}`;
+      const processedKey = this.generateHashKey(imageRequestInfo);
       this.s3Client.putObject({
         Bucket: imageRequestInfo.bucket,
         Key: processedKey,
@@ -139,6 +138,35 @@ export class ImageHandler {
     }
 
     return base64EncodedImage;
+  }
+
+    /**
+   * Generates a unique hash key for the image request.
+   * @param imageRequestInfo The image request information.
+   * @returns The generated hash key.
+   */
+  //uses md5 bc it is faster and no need for cryptographically secure hash
+  // also collisions are not a concern here bc this is appended to the key
+  private generateHashKey(imageRequestInfo: ImageRequestInfo): string {
+    const { bucket, requestType, edits } = imageRequestInfo;
+    const combinedString = JSON.stringify({ bucket, requestType, edits: this.sortObject(edits) });
+    const hash = createHash('md5').update(combinedString).digest('hex');
+    const processedKey = `${imageRequestInfo.key}-${hash}`
+    return processedKey
+  }
+
+  public sortObject(obj: any): any {
+    if (Array.isArray(obj)) {
+      return obj.map(this.sortObject);
+    } else if (obj !== null && typeof obj === 'object') {
+      return Object.keys(obj)
+        .sort()
+        .reduce((result, key) => {
+          result[key] = this.sortObject(obj[key]);
+          return result;
+        }, {});
+    }
+    return obj;
   }
 
   /**
