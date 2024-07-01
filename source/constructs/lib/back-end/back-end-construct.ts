@@ -14,10 +14,8 @@ import {
   OriginSslPolicy,
   PriceClass,
   ViewerProtocolPolicy,
-  OriginGroup,
-  OriginResponseTimeout
 } from "aws-cdk-lib/aws-cloudfront";
-import { HttpOrigin, S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
+import { HttpOrigin, S3Origin, OriginGroup } from "aws-cdk-lib/aws-cloudfront-origins";
 import { Policy, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
@@ -170,6 +168,7 @@ export class BackEnd extends Construct {
 
     // Add S3 origin
     const s3Origin = new S3Origin(props.sourceBuckets[0]);
+
     // Add API Gateway origin
     const apiGatewayOrigin: IOrigin = new HttpOrigin(`${apiGatewayRestApi.restApiId}.execute-api.${Aws.REGION}.amazonaws.com`, {
       originSslProtocols: [OriginSslPolicy.TLS_V1_1, OriginSslPolicy.TLS_V1_2],
@@ -180,11 +179,6 @@ export class BackEnd extends Construct {
       primaryOrigin: s3Origin,
       fallbackOrigin: apiGatewayOrigin,
       fallbackStatusCodes: [404],
-      originRequestPolicy: OriginRequestPolicy.ALL_VIEWER,
-      originResponseTimeout: OriginResponseTimeout.seconds(30), // Set response timeout
-      originReadTimeout: OriginResponseTimeout.seconds(30), // Set read timeout
-      originKeepaliveTimeout: OriginResponseTimeout.seconds(5), // Set keep-alive timeout
-      originAttempts: 3, // Set the number of attempts
     });
 
     const cloudFrontDistributionProps: DistributionProps = {
@@ -207,10 +201,6 @@ export class BackEnd extends Construct {
         { httpStatus: 503, ttl: Duration.minutes(10) },
         { httpStatus: 504, ttl: Duration.minutes(10) },
       ],
-       originShield: {
-        enabled: true,
-        region: Aws.REGION, // Set the appropriate region for Origin Shield
-      },
     };
 
     const logGroupProps = {
