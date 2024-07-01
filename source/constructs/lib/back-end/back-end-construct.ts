@@ -168,7 +168,8 @@ export class BackEnd extends Construct {
 
     // Add S3 origin
     // Reference an existing S3 bucket by its name
-    const existingBucket = Bucket.fromBucketName(this, 'ExistingBucket', props.sourceBuckets[0]);
+    // HARD CODING THIS BUCKET
+    const existingBucket = Bucket.fromBucketName(this, 'ExistingBucket', 'oath-media-dev');
     const s3Origin = new S3Origin(existingBucket);
 
     // Add API Gateway origin
