@@ -4,7 +4,7 @@
 import Rekognition from "aws-sdk/clients/rekognition";
 import S3 from "aws-sdk/clients/s3";
 import sharp, { FormatEnum, OverlayOptions, ResizeOptions } from "sharp";
-import {createHash} from "crypto";
+// import {createHash} from "crypto";
 import {
   BoundingBox,
   BoxSize,
