@@ -74,11 +74,6 @@ export class ImageHandler {
    * @returns Processed and modified image encoded as base64 string.
    */
   async process(imageRequestInfo: ImageRequestInfo): Promise<string> {
-     // Check if the image is already processed
-    if (imageRequestInfo.isProcessed) {
-      return imageRequestInfo.originalImage.toString("base64");
-    }
-
     const { originalImage, edits } = imageRequestInfo;
     const options = { failOnError: false, animated: imageRequestInfo.contentType === ContentTypes.GIF };
     let base64EncodedImage = "";
@@ -106,10 +101,9 @@ export class ImageHandler {
       const imageBuffer = await modifiedImage.toBuffer();
       base64EncodedImage = imageBuffer.toString("base64");
       // Save the processed image back to S3
-      const processedKey = this.generateHashKey(imageRequestInfo);
       this.s3Client.putObject({
         Bucket: imageRequestInfo.bucket,
-        Key: processedKey,
+        Key: imageRequestInfo.base64String,
         Body: imageBuffer,
         ContentType: imageRequestInfo.contentType,
         CacheControl: imageRequestInfo.cacheControl,
@@ -147,27 +141,27 @@ export class ImageHandler {
    */
   //uses md5 bc it is faster and no need for cryptographically secure hash
   // also collisions are not a concern here bc this is appended to the key
-  private generateHashKey(imageRequestInfo: ImageRequestInfo): string {
-    const { bucket, requestType, edits } = imageRequestInfo;
-    const combinedString = JSON.stringify({ bucket, requestType, edits: this.sortObject(edits) });
-    const hash = createHash('md5').update(combinedString).digest('hex');
-    const processedKey = `${imageRequestInfo.key}-${hash}`
-    return processedKey
-  }
+  // private generateHashKey(imageRequestInfo: ImageRequestInfo): string {
+  //   const { bucket, requestType, edits } = imageRequestInfo;
+  //   const combinedString = JSON.stringify({ bucket, requestType, edits: this.sortObject(edits) });
+  //   const hash = createHash('md5').update(combinedString).digest('hex');
+  //   const processedKey = `${imageRequestInfo.key}-${hash}`
+  //   return processedKey
+  // }
 
-  public sortObject(obj: any): any {
-    if (Array.isArray(obj)) {
-      return obj.map(this.sortObject);
-    } else if (obj !== null && typeof obj === 'object') {
-      return Object.keys(obj)
-        .sort()
-        .reduce((result, key) => {
-          result[key] = this.sortObject(obj[key]);
-          return result;
-        }, {});
-    }
-    return obj;
-  }
+  // public sortObject(obj: any): any {
+  //   if (Array.isArray(obj)) {
+  //     return obj.map(this.sortObject);
+  //   } else if (obj !== null && typeof obj === 'object') {
+  //     return Object.keys(obj)
+  //       .sort()
+  //       .reduce((result, key) => {
+  //         result[key] = this.sortObject(obj[key]);
+  //         return result;
+  //       }, {});
+  //   }
+  //   return obj;
+  // }
 
   /**
    * Applies image modifications to the original image based on edits.

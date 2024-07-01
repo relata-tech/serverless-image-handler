@@ -42,6 +42,7 @@ export interface ImageRequestInfo {
   requestType: RequestTypes;
   bucket: string;
   key: string;
+  base64String: string;
   edits?: ImageEdits;
   originalImage: Buffer;
   headers?: Headers;
@@ -51,7 +52,6 @@ export interface ImageRequestInfo {
   cacheControl?: string;
   outputFormat?: ImageFormatTypes;
   effort?: number;
-  isProcessed?: boolean;
 }
 
 export interface RekognitionCompatibleImage {
