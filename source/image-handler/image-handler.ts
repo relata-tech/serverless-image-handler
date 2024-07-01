@@ -4,7 +4,7 @@
 import Rekognition from "aws-sdk/clients/rekognition";
 import S3 from "aws-sdk/clients/s3";
 import sharp, { FormatEnum, OverlayOptions, ResizeOptions } from "sharp";
-
+import {createHash} from "crypto";
 import {
   BoundingBox,
   BoxSize,
@@ -74,6 +74,11 @@ export class ImageHandler {
    * @returns Processed and modified image encoded as base64 string.
    */
   async process(imageRequestInfo: ImageRequestInfo): Promise<string> {
+     // Check if the image is already processed
+    if (imageRequestInfo.isProcessed) {
+      return imageRequestInfo.originalImage.toString("base64");
+    }
+
     const { originalImage, edits } = imageRequestInfo;
     const options = { failOnError: false, animated: imageRequestInfo.contentType === ContentTypes.GIF };
     let base64EncodedImage = "";
@@ -100,6 +105,16 @@ export class ImageHandler {
       // convert to base64 encoded string
       const imageBuffer = await modifiedImage.toBuffer();
       base64EncodedImage = imageBuffer.toString("base64");
+      // Save the processed image back to S3
+      const hash = createHash('md5').update(JSON.stringify(edits)).digest('hex');
+      const processedKey = `${imageRequestInfo.key}-${hash}`;
+      this.s3Client.putObject({
+        Bucket: imageRequestInfo.bucket,
+        Key: processedKey,
+        Body: imageBuffer,
+        ContentType: imageRequestInfo.contentType,
+        CacheControl: imageRequestInfo.cacheControl,
+      }).promise();
     } else {
       if (imageRequestInfo.outputFormat !== undefined) {
         // convert image to Sharp and change output format if specified

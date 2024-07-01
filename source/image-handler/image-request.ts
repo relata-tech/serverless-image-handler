@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import S3 from "aws-sdk/clients/s3";
-import { createHmac } from "crypto";
+import { createHmac, createHash } from "crypto";
 
 import {
   ContentTypes,
@@ -105,8 +105,21 @@ export class ImageRequest {
       imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType, imageRequestInfo.bucket);
       imageRequestInfo.edits = this.parseImageEdits(event, imageRequestInfo.requestType);
 
+      // Sort the edits JSON to ensure consistent hash key
+      imageRequestInfo.edits = this.sortObject(imageRequestInfo.edits);
+
+      // Generate the hash key for the processed image
+      const processedKey = this.generateHashKey(imageRequestInfo);
+
+      // Check if the processed image exists in S3
+      const processedImage = await this.getProcessedImage(imageRequestInfo.bucket, processedKey);
+      if (processedImage) {
+        return { ...imageRequestInfo, ...processedImage, isProcessed: true };
+      }
+
+      // Get the original image if the processed image does not exist
       const originalImage = await this.getOriginalImage(imageRequestInfo.bucket, imageRequestInfo.key);
-      imageRequestInfo = { ...imageRequestInfo, ...originalImage };
+      imageRequestInfo = { ...imageRequestInfo, ...originalImage, isProcessed: false};
 
       imageRequestInfo.headers = this.parseImageHeaders(event, imageRequestInfo.requestType);
 
@@ -143,6 +156,54 @@ export class ImageRequest {
       throw error;
     }
   }
+    /**
+   * Generates a unique hash key for the image request.
+   * @param imageRequestInfo The image request information.
+   * @returns The generated hash key.
+   */
+  //uses md5 bc it is faster and no need for cryptographically secure hash
+  // also collisions are not a concern here bc this is appended to the key
+  private generateHashKey(imageRequestInfo: ImageRequestInfo): string {
+    const { bucket, requestType, edits } = imageRequestInfo;
+    const combinedString = JSON.stringify({ bucket, requestType, edits });
+    const hash = createHash('md5').update(combinedString).digest('hex');
+    const processedKey = `${imageRequestInfo.key}-${hash}`
+    return processedKey
+  }
+
+  public sortObject(obj: any): any {
+    if (Array.isArray(obj)) {
+      return obj.map(this.sortObject);
+    } else if (obj !== null && typeof obj === 'object') {
+      return Object.keys(obj)
+        .sort()
+        .reduce((result, key) => {
+          result[key] = this.sortObject(obj[key]);
+          return result;
+        }, {});
+    }
+    return obj;
+  }
+
+  public async getProcessedImage(bucket: string, key: string): Promise<OriginalImageInfo> {
+    try {
+      const imageLocation = { Bucket: bucket, Key: key };
+      const originalImage = await this.s3Client.getObject(imageLocation).promise();
+      const imageBuffer = Buffer.from(originalImage.Body as Uint8Array);
+
+      return {
+        contentType: originalImage.ContentType,
+        cacheControl: originalImage.CacheControl ?? "max-age=31536000,public",
+        originalImage: imageBuffer,
+      };
+    } catch (error) {
+      if (error.code === 'NoSuchKey') {
+        return null;
+      }
+      throw error;
+    }
+  }
+
 
   /**
    * Gets the original image from an Amazon S3 bucket.

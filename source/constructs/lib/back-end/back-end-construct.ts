@@ -66,7 +66,8 @@ export class BackEnd extends Construct {
           ],
         }),
         new PolicyStatement({
-          actions: ["s3:GetObject"],
+          //update the policy to allow the lambda function to put items
+          actions: ["s3:GetObject", "s3:PutObject", "s3:PutObjectAcl"],
           resources: props.createSourceBucketsResource("/*"),
         }),
         new PolicyStatement({
