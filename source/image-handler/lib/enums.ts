@@ -18,6 +18,7 @@ export enum RequestTypes {
 
 export enum ImageFormatTypes {
   JPG = "jpg",
+  PJPEG = "pjpeg",
   JPEG = "jpeg",
   PNG = "png",
   WEBP = "webp",

@@ -60,7 +60,11 @@ export class ImageHandler {
       // Include reduction effort for webp images if included
       if (imageRequestInfo.outputFormat === ImageFormatTypes.WEBP && typeof imageRequestInfo.effort !== "undefined") {
         modifiedOutputImage.webp({ effort: imageRequestInfo.effort });
-      } else {
+      }
+      else if (imageRequestInfo.outputFormat === 'pjpeg') {
+        modifiedOutputImage.jpeg({ progressive: true, mozjpeg: true, quality: 80 });
+      }
+      else {
         modifiedOutputImage.toFormat(ImageHandler.convertImageFormatType(imageRequestInfo.outputFormat));
       }
     }
