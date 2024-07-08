@@ -175,7 +175,7 @@ export class BackEnd extends Construct {
     // HARD CODING THIS BUCKET
     // Origin Access Identity
     const originAccessIdentity = new OriginAccessIdentity(this, 'OAI');
-    const existingBucket = Bucket.fromBucketName(this, 'ExistingBucket', 'oath-media' + this.stage === 'prod' ? '' : '-dev');
+    const existingBucket = Bucket.fromBucketName(this, 'ExistingBucket', `oath-media${this.stage === 'prod' ? '' : '-dev'}`);
     const s3Origin = new S3Origin(existingBucket, {
       originAccessIdentity: originAccessIdentity,
     });
@@ -227,9 +227,9 @@ export class BackEnd extends Construct {
 
     const apiGatewayProps: LambdaRestApiProps = {
       handler: imageHandlerLambdaFunction,
-      // deployOptions: {
-      //   stageName: "image",
-      // },
+      deployOptions: {
+        stageName: "image",
+      },
       binaryMediaTypes: ["*/*"],
       defaultMethodOptions: {
         authorizationType: api.AuthorizationType.NONE,
