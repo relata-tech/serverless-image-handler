@@ -39,21 +39,24 @@ export interface BackEndProps extends SolutionConstructProps {
   readonly uuid: string;
   readonly cloudFrontPriceClass: string;
   readonly createSourceBucketsResource: (key?: string) => string[];
+  readonly production: boolean;
 }
 
 export class BackEnd extends Construct {
   public domainName: string;
+  public stage: string;
 
   constructor(scope: Construct, id: string, props: BackEndProps) {
     super(scope, id);
+    this.stage = props.production ? "prod" : "dev";
 
-    const imageHandlerLambdaFunctionRole = new Role(this, "ImageHandlerFunctionRole", {
+    const imageHandlerLambdaFunctionRole = new Role(this, `ImageHandlerFunctionRole-${this.stage}`, {
       assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
       path: "/",
     });
     props.secretsManagerPolicy.attachToRole(imageHandlerLambdaFunctionRole);
 
-    const imageHandlerLambdaFunctionRolePolicy = new Policy(this, "ImageHandlerFunctionPolicy", {
+    const imageHandlerLambdaFunctionRolePolicy = new Policy(this, `ImageHandlerFunctionPolicy-${this.stage}`, {
       statements: [
         new PolicyStatement({
           actions: ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
@@ -91,8 +94,8 @@ export class BackEnd extends Construct {
     ]);
     imageHandlerLambdaFunctionRole.attachInlinePolicy(imageHandlerLambdaFunctionRolePolicy);
 
-    const imageHandlerLambdaFunction = new NodejsFunction(this, "ImageHandlerLambdaFunction", {
-      description: `${props.solutionName} (${props.solutionVersion}): Performs image edits and manipulations`,
+    const imageHandlerLambdaFunction = new NodejsFunction(this, `ImageHandlerLambdaFunction${this.stage}`, {
+      description: `${props.solutionName} (${this.stage}-${props.solutionVersion}): Performs image edits and manipulations`,
       memorySize: 1024,
       runtime: Runtime.NODEJS_20_X,
       timeout: Duration.seconds(29),
@@ -131,7 +134,7 @@ export class BackEnd extends Construct {
       },
     });
 
-    const imageHandlerLogGroup = new LogGroup(this, "ImageHandlerLogGroup", {
+    const imageHandlerLogGroup = new LogGroup(this, `ImageHandlerLogGroup-${this.stage}`, {
       logGroupName: `/aws/lambda/${imageHandlerLambdaFunction.functionName}`,
       retention: props.logRetentionPeriod as RetentionDays,
     });
@@ -144,7 +147,7 @@ export class BackEnd extends Construct {
     ]);
 
     const cachePolicy = new CachePolicy(this, "CachePolicy", {
-      cachePolicyName: `ServerlessImageHandler-${props.uuid}`,
+      cachePolicyName: `ServerlessImageHandler-${this.stage}-${props.uuid}`,
       defaultTtl: Duration.days(1),
       minTtl: Duration.seconds(1),
       maxTtl: Duration.days(365),
@@ -154,7 +157,7 @@ export class BackEnd extends Construct {
     });
 
     const originRequestPolicy = new OriginRequestPolicy(this, "OriginRequestPolicy", {
-      originRequestPolicyName: `ServerlessImageHandler-${props.uuid}`,
+      originRequestPolicyName: `ServerlessImageHandler-${this.stage}-${props.uuid}`,
       headerBehavior: CacheHeaderBehavior.allowList("origin"),
       queryStringBehavior: CacheQueryStringBehavior.allowList("signature"),
     });
@@ -172,7 +175,7 @@ export class BackEnd extends Construct {
     // HARD CODING THIS BUCKET
     // Origin Access Identity
     const originAccessIdentity = new OriginAccessIdentity(this, 'OAI');
-    const existingBucket = Bucket.fromBucketName(this, 'ExistingBucket', 'oath-media-dev');
+    const existingBucket = Bucket.fromBucketName(this, 'ExistingBucket', 'oath-media' + this.stage === 'prod' ? '' : '-dev');
     const s3Origin = new S3Origin(existingBucket, {
       originAccessIdentity: originAccessIdentity,
     });

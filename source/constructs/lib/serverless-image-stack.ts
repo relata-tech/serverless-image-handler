@@ -122,6 +122,12 @@ export class ServerlessImageHandlerStack extends Stack {
       default: "",
     });
 
+    const productionParameter = new CfnParameter(this, "ProductionParameter", {
+      type: "String",
+      description: "Is this deployment to production or not?",
+      default: "No",
+    });
+
     const cloudFrontPriceClassParameter = new CfnParameter(this, "CloudFrontPriceClassParameter", {
       type: "String",
       description:
@@ -142,7 +148,8 @@ export class ServerlessImageHandlerStack extends Stack {
     });
 
     const anonymousUsage = `${solutionMapping.findInMap("Config", "AnonymousUsage")}`;
-
+    const production = productionParameter.valueAsString === "Yes";
+    const stage = production ? "prod" : "dev";
     const solutionConstructProps: SolutionConstructProps = {
       corsEnabled: corsEnabledParameter.valueAsString,
       corsOrigin: corsOriginParameter.valueAsString,
@@ -156,21 +163,22 @@ export class ServerlessImageHandlerStack extends Stack {
       enableDefaultFallbackImage: enableDefaultFallbackImageParameter.valueAsString as YesNo,
       fallbackImageS3Bucket: fallbackImageS3BucketParameter.valueAsString,
       fallbackImageS3KeyBucket: fallbackImageS3KeyParameter.valueAsString,
+      production,
     };
 
-    const commonResources = new CommonResources(this, "CommonResources", {
+    const commonResources = new CommonResources(this, `CommonResources-${stage}`, {
       solutionId: props.solutionId,
       solutionVersion: props.solutionVersion,
       solutionName: props.solutionName,
       ...solutionConstructProps,
     });
 
-    const frontEnd = new FrontEnd(this, "FrontEnd", {
+    const frontEnd = new FrontEnd(this, `FrontEnd-${stage}`, {
       logsBucket: commonResources.logsBucket,
       conditions: commonResources.conditions,
     });
 
-    const backEnd = new BackEnd(this, "BackEnd", {
+    const backEnd = new BackEnd(this, `BackEnd-${stage}`, {
       solutionVersion: props.solutionVersion,
       solutionId: props.solutionId,
       solutionName: props.solutionName,
@@ -212,10 +220,10 @@ export class ServerlessImageHandlerStack extends Stack {
     });
 
     commonResources.appRegistryApplication({
-      description: `${props.solutionId} - ${props.solutionName}. Version ${props.solutionVersion}`,
+      description: `${props.solutionId} - ${stage} ${props.solutionName}. Version ${props.solutionVersion}`,
       solutionVersion: props.solutionVersion,
       solutionId: props.solutionId,
-      applicationName: props.solutionName,
+      applicationName: props.solutionName + "-" + stage,
     });
 
     this.templateOptions.metadata = {
