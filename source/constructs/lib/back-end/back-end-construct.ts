@@ -175,13 +175,14 @@ export class BackEnd extends Construct {
     // Add API Gateway origin
     const apiGatewayOrigin: IOrigin = new HttpOrigin(`${apiGatewayRestApi.restApiId}.execute-api.${Aws.REGION}.amazonaws.com`, {
       originSslProtocols: [OriginSslPolicy.TLS_V1_1, OriginSslPolicy.TLS_V1_2],
+      originPath: `/${apiGatewayRestApi.deploymentStage.stageName}`,
     });
 
     // Create an origin group
     const originGroup = new OriginGroup({
       primaryOrigin: s3Origin,
       fallbackOrigin: apiGatewayOrigin,
-      fallbackStatusCodes: [404],
+      fallbackStatusCodes: [400, 403, 404, 416, 500, 502, 503, 504],
     });
 
     const cloudFrontDistributionProps: DistributionProps = {
@@ -212,9 +213,9 @@ export class BackEnd extends Construct {
 
     const apiGatewayProps: LambdaRestApiProps = {
       handler: imageHandlerLambdaFunction,
-      deployOptions: {
-        stageName: "image",
-      },
+      // deployOptions: {
+      //   stageName: "image",
+      // },
       binaryMediaTypes: ["*/*"],
       defaultMethodOptions: {
         authorizationType: api.AuthorizationType.NONE,
