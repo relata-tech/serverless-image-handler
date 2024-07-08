@@ -12,6 +12,7 @@ import {
   IOrigin,
   OriginRequestPolicy,
   OriginSslPolicy,
+  OriginAccessIdentity,
   PriceClass,
   ViewerProtocolPolicy,
 } from "aws-cdk-lib/aws-cloudfront";
@@ -169,13 +170,23 @@ export class BackEnd extends Construct {
     // Add S3 origin
     // Reference an existing S3 bucket by its name
     // HARD CODING THIS BUCKET
+    // Origin Access Identity
+    const originAccessIdentity = new OriginAccessIdentity(this, 'OAI');
     const existingBucket = Bucket.fromBucketName(this, 'ExistingBucket', 'oath-media-dev');
-    const s3Origin = new S3Origin(existingBucket);
+    const s3Origin = new S3Origin(existingBucket, {
+      originAccessIdentity: originAccessIdentity,
+    });
+    // Grant the CloudFront OAI access to the S3 bucket
+    existingBucket.addToResourcePolicy(new PolicyStatement({
+      actions: ['s3:GetObject'],
+      resources: [`${existingBucket.bucketArn}/*`],
+      principals: [originAccessIdentity.grantPrincipal],
+    }));
 
     // Add API Gateway origin
     const apiGatewayOrigin: IOrigin = new HttpOrigin(`${apiGatewayRestApi.restApiId}.execute-api.${Aws.REGION}.amazonaws.com`, {
       originSslProtocols: [OriginSslPolicy.TLS_V1_1, OriginSslPolicy.TLS_V1_2],
-      originPath: `/${apiGatewayRestApi.deploymentStage.stageName}`,
+      originPath: `/image`,
     });
 
     // Create an origin group
