@@ -26,6 +26,7 @@ export interface AnonymousMetricCustomResourceProps extends SolutionConstructPro
 
 export interface ValidateSourceAndFallbackImageBucketsCustomResourceProps {
   readonly sourceBuckets: string;
+  readonly storageBucket: string;
   readonly fallbackImageS3Bucket: string;
   readonly fallbackImageS3Key: string;
 }
@@ -186,6 +187,12 @@ export class CustomResourcesConstruct extends Construct {
       CustomAction: "checkSourceBuckets",
       Region: Aws.REGION,
       SourceBuckets: props.sourceBuckets,
+    });
+
+    this.createCustomResource("CustomResourceCheckStorageBucket", this.customResourceLambda, {
+      CustomAction: "checkStorageBucket",
+      Region: Aws.REGION,
+      SourceBuckets: props.storageBucket,
     });
 
     this.createCustomResource(

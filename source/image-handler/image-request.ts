@@ -101,8 +101,9 @@ export class ImageRequest {
       let imageRequestInfo: ImageRequestInfo = <ImageRequestInfo>{};
 
       imageRequestInfo.requestType = this.parseRequestType(event);
-      imageRequestInfo.bucket = this.parseImageBucket(event, imageRequestInfo.requestType);
-      imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType, imageRequestInfo.bucket);
+      imageRequestInfo.sourceBucket = this.parseImageBucket(event, imageRequestInfo.requestType);
+      imageRequestInfo.storageBucket = this.getAllowedStorageBucket()
+      imageRequestInfo.key = this.parseImageKey(event, imageRequestInfo.requestType, imageRequestInfo.sourceBucket);
       imageRequestInfo.edits = this.parseImageEdits(event, imageRequestInfo.requestType);
       imageRequestInfo.base64String = event.path.startsWith("/") ? event.path.slice(1) : event.path;
 
@@ -116,7 +117,7 @@ export class ImageRequest {
       // }
 
       // Get the original image if the processed image does not exist
-      const originalImage = await this.getOriginalImage(imageRequestInfo.bucket, imageRequestInfo.key);
+      const originalImage = await this.getOriginalImage(imageRequestInfo.sourceBucket, imageRequestInfo.key);
       imageRequestInfo = { ...imageRequestInfo, ...originalImage};
 
       imageRequestInfo.headers = this.parseImageHeaders(event, imageRequestInfo.requestType);
@@ -486,6 +487,25 @@ export class ImageRequest {
       );
     } else {
       return SOURCE_BUCKETS.replace(/\s+/g, "").split(",");
+    }
+  }
+
+    /**
+   * Returns a formatted image source bucket allowed list as specified in the SOURCE_BUCKETS environment variable of the image handler Lambda function.
+   * Provides error handling for missing/invalid values.
+   * @returns A formatted image source bucket.
+   */
+  public getAllowedStorageBucket(): string {
+    const { STORAGE_BUCKET } = process.env;
+
+    if (STORAGE_BUCKET === undefined) {
+      throw new ImageHandlerError(
+        StatusCodes.BAD_REQUEST,
+        "GetAllowedStorageBucket::NoStorageBucket",
+        "The STORAGE_BUCKET variable could not be read. Please check that it is not empty and contains a Bucket name."
+      );
+    } else {
+      return STORAGE_BUCKET
     }
   }
 

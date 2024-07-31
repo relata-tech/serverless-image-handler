@@ -41,6 +41,13 @@ export class ServerlessImageHandlerStack extends Stack {
       default: "defaultBucket, bucketNo2, bucketNo3, ...",
     });
 
+    const storageBucketParameter = new CfnParameter(this, "StorageBucketParameter", {
+      type: "String",
+      description:
+        "The name of the Amazon S3 bucket to store processed images as a cache for 30 days",
+      default: "",
+    });
+
     const deployDemoUIParameter = new CfnParameter(this, "DeployDemoUIParameter", {
       type: "String",
       description:
@@ -154,6 +161,7 @@ export class ServerlessImageHandlerStack extends Stack {
       corsEnabled: corsEnabledParameter.valueAsString,
       corsOrigin: corsOriginParameter.valueAsString,
       sourceBuckets: sourceBucketsParameter.valueAsString,
+      storageBucket: storageBucketParameter.valueAsString,
       deployUI: deployDemoUIParameter.valueAsString as YesNo,
       logRetentionPeriod: logRetentionPeriodParameter.valueAsNumber,
       autoWebP: autoWebPParameter.valueAsString,
@@ -199,6 +207,7 @@ export class ServerlessImageHandlerStack extends Stack {
 
     commonResources.customResources.setupValidateSourceAndFallbackImageBuckets({
       sourceBuckets: sourceBucketsParameter.valueAsString,
+      storageBucket: storageBucketParameter.valueAsString,
       fallbackImageS3Bucket: fallbackImageS3BucketParameter.valueAsString,
       fallbackImageS3Key: fallbackImageS3KeyParameter.valueAsString,
     });
@@ -236,6 +245,10 @@ export class ServerlessImageHandlerStack extends Stack {
           {
             Label: { default: "Image Sources" },
             Parameters: [sourceBucketsParameter.logicalId],
+          },
+          {
+            Label: { default: "Image Output Bucket" },
+            Parameters: [storageBucketParameter.logicalId],
           },
           {
             Label: { default: "Demo UI" },
@@ -276,6 +289,7 @@ export class ServerlessImageHandlerStack extends Stack {
           [corsEnabledParameter.logicalId]: { default: "CORS Enabled" },
           [corsOriginParameter.logicalId]: { default: "CORS Origin" },
           [sourceBucketsParameter.logicalId]: { default: "Source Buckets" },
+          [storageBucketParameter.logicalId]: { default: "Storage Buckets" },
           [deployDemoUIParameter.logicalId]: { default: "Deploy Demo UI" },
           [logRetentionPeriodParameter.logicalId]: {
             default: "Log Retention Period",
@@ -317,6 +331,10 @@ export class ServerlessImageHandlerStack extends Stack {
     new CfnOutput(this, "SourceBuckets", {
       value: sourceBucketsParameter.valueAsString,
       description: "Amazon S3 bucket location containing original image files.",
+    });
+    new CfnOutput(this, "StorageBucket", {
+      value: storageBucketParameter.valueAsString,
+      description: "Amazon S3 bucket to store processed image files.",
     });
     new CfnOutput(this, "CorsEnabled", {
       value: corsEnabledParameter.valueAsString,

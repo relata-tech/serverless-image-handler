@@ -106,6 +106,7 @@ export class BackEnd extends Construct {
         CORS_ENABLED: props.corsEnabled,
         CORS_ORIGIN: props.corsOrigin,
         SOURCE_BUCKETS: props.sourceBuckets,
+        STORAGE_BUCKET: props.storageBucket,
         REWRITE_MATCH_PATTERN: "",
         REWRITE_SUBSTITUTION: "",
         ENABLE_SIGNATURE: props.enableSignature,
@@ -175,14 +176,15 @@ export class BackEnd extends Construct {
     // HARD CODING THIS BUCKET
     // Origin Access Identity
     const originAccessIdentity = new OriginAccessIdentity(this, 'OAI');
-    const existingBucket = Bucket.fromBucketName(this, 'ExistingBucket', `oath-media${this.stage === 'prod' ? '' : '-dev'}`);
-    const s3Origin = new S3Origin(existingBucket, {
+    const originalImageBucket = Bucket.fromBucketName(this, 'OriginalBucket', `oath-original-media${this.stage === '-prod' ? '' : '-dev'}`);
+    const processedImageBucket = Bucket.fromBucketName(this, 'ExistingBucket', `oath-processed-media${this.stage === '-prod' ? '' : '-dev'}`);
+    const s3Origin = new S3Origin(processedImageBucket, {
       originAccessIdentity: originAccessIdentity,
     });
     // Grant the CloudFront OAI access to the S3 bucket
-    existingBucket.addToResourcePolicy(new PolicyStatement({
+    processedImageBucket.addToResourcePolicy(new PolicyStatement({
       actions: ['s3:GetObject'],
-      resources: [`${existingBucket.bucketArn}/*`],
+      resources: [`${processedImageBucket.bucketArn}/*`],
       principals: [originAccessIdentity.grantPrincipal],
     }));
 

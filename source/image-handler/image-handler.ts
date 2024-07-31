@@ -106,9 +106,11 @@ export class ImageHandler {
       base64EncodedImage = imageBuffer.toString("base64");
       // Save the processed image back to S3
       this.s3Client.putObject({
-        Bucket: imageRequestInfo.bucket,
+        Bucket: imageRequestInfo.storageBucket,
         Key: imageRequestInfo.base64String,
         Body: imageBuffer,
+        StorageClass: 'INTELLIGENT_TIERING',
+        Tagging: "Expires=true",
         ContentType: imageRequestInfo.contentType,
         CacheControl: imageRequestInfo.cacheControl,
       }).promise();
@@ -120,9 +122,11 @@ export class ImageHandler {
         const imageBuffer = await modifiedImage.toBuffer();
         base64EncodedImage = imageBuffer.toString("base64");
         this.s3Client.putObject({
-            Bucket: imageRequestInfo.bucket,
+            Bucket: imageRequestInfo.storageBucket,
             Key: imageRequestInfo.base64String,
             Body: imageBuffer,
+            StorageClass: 'INTELLIGENT_TIERING',
+            Tagging: "Expires=true",
             ContentType: imageRequestInfo.contentType,
             CacheControl: imageRequestInfo.cacheControl,
         }).promise();
