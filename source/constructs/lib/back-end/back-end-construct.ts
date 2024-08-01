@@ -50,13 +50,13 @@ export class BackEnd extends Construct {
     super(scope, id);
     this.stage = props.production ? "prod" : "dev";
 
-    const imageHandlerLambdaFunctionRole = new Role(this, `ImageHandlerFunctionRole-${this.stage}`, {
+    const imageHandlerLambdaFunctionRole = new Role(this, `ImageHandlerFunctionRole`, {
       assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
       path: "/",
     });
     props.secretsManagerPolicy.attachToRole(imageHandlerLambdaFunctionRole);
 
-    const imageHandlerLambdaFunctionRolePolicy = new Policy(this, `ImageHandlerFunctionPolicy-${this.stage}`, {
+    const imageHandlerLambdaFunctionRolePolicy = new Policy(this, `ImageHandlerFunctionPolicy`, {
       statements: [
         new PolicyStatement({
           actions: ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
@@ -71,8 +71,13 @@ export class BackEnd extends Construct {
         }),
         new PolicyStatement({
           //update the policy to allow the lambda function to put items
-          actions: ["s3:GetObject", "s3:PutObject", "s3:PutObjectAcl"],
-          resources: props.createSourceBucketsResource("/*"),
+          actions: ["s3:GetObject"],
+          resources: props.createSourceBucketsResource(props.sourceBuckets),
+        }),
+        new PolicyStatement({
+          //update the policy to allow the lambda function to put items
+          actions: ["s3:PutObject", "s3:PutObjectAcl"],
+          resources: props.createSourceBucketsResource(props.storageBucket),
         }),
         new PolicyStatement({
           actions: ["s3:ListBucket"],
@@ -94,7 +99,7 @@ export class BackEnd extends Construct {
     ]);
     imageHandlerLambdaFunctionRole.attachInlinePolicy(imageHandlerLambdaFunctionRolePolicy);
 
-    const imageHandlerLambdaFunction = new NodejsFunction(this, `ImageHandlerLambdaFunction${this.stage}`, {
+    const imageHandlerLambdaFunction = new NodejsFunction(this, `ImageHandlerLambdaFunction-${this.stage}`, {
       description: `${props.solutionName} (${this.stage}-${props.solutionVersion}): Performs image edits and manipulations`,
       memorySize: 1024,
       runtime: Runtime.NODEJS_20_X,
@@ -176,8 +181,7 @@ export class BackEnd extends Construct {
     // HARD CODING THIS BUCKET
     // Origin Access Identity
     const originAccessIdentity = new OriginAccessIdentity(this, 'OAI');
-    const originalImageBucket = Bucket.fromBucketName(this, 'OriginalBucket', `oath-original-media${this.stage === '-prod' ? '' : '-dev'}`);
-    const processedImageBucket = Bucket.fromBucketName(this, 'ExistingBucket', `oath-processed-media${this.stage === '-prod' ? '' : '-dev'}`);
+    const processedImageBucket = Bucket.fromBucketName(this, 'ExistingBucket', props.storageBucket);
     const s3Origin = new S3Origin(processedImageBucket, {
       originAccessIdentity: originAccessIdentity,
     });

@@ -174,19 +174,19 @@ export class ServerlessImageHandlerStack extends Stack {
       production,
     };
 
-    const commonResources = new CommonResources(this, `CommonResources-${stage}`, {
+    const commonResources = new CommonResources(this, `CommonResources`, {
       solutionId: props.solutionId,
       solutionVersion: props.solutionVersion,
       solutionName: props.solutionName,
       ...solutionConstructProps,
     });
 
-    const frontEnd = new FrontEnd(this, `FrontEnd-${stage}`, {
+    const frontEnd = new FrontEnd(this, `FrontEnd`, {
       logsBucket: commonResources.logsBucket,
       conditions: commonResources.conditions,
     });
 
-    const backEnd = new BackEnd(this, `BackEnd-${stage}`, {
+    const backEnd = new BackEnd(this, `BackEnd`, {
       solutionVersion: props.solutionVersion,
       solutionId: props.solutionId,
       solutionName: props.solutionName,
