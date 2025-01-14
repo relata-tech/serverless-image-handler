@@ -4,3 +4,5 @@
 export * from "./types";
 export * from "./enums";
 export * from "./interfaces";
+export * from './equi2cube';
+export * from './utils';

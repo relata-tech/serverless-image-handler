@@ -277,6 +277,19 @@ export class ThumborMapper {
   }
 
   /**
+   * Maps cubemap transformations to the current edits object.
+   * @param filterValue The cubemap face to transform.
+   * @param currentEdits The edits to be performed.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private mapCubemap(filterValue: string, currentEdits: Record<string, any>): void {
+    const validFaces = ["front", "back", "left", "right", "top", "bottom"];
+    if (validFaces.includes(filterValue)) {
+      currentEdits.cubemap = { face: filterValue };
+    }
+  }
+
+  /**
    * Scanner function for matching supported Thumbor filters and converting their capabilities into sharp.js supported operations.
    * @param filterExpression The URL path filter.
    * @param fileFormat The file type of the original image.
@@ -371,6 +384,10 @@ export class ThumborMapper {
       }
       case "animated": {
         currentEdits.animated = filterValue.toLowerCase() != "false";
+        break;
+      }
+      case "cubemap": {
+        this.mapCubemap(filterValue, currentEdits);
         break;
       }
     }
