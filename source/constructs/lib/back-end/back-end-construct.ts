@@ -18,7 +18,7 @@ import {
 } from "aws-cdk-lib/aws-cloudfront";
 import { HttpOrigin, S3Origin, OriginGroup } from "aws-cdk-lib/aws-cloudfront-origins";
 import { Policy, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { Runtime } from "aws-cdk-lib/aws-lambda";
+import { Runtime, Architecture } from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
 import { IBucket, Bucket } from "aws-cdk-lib/aws-s3";
@@ -103,6 +103,7 @@ export class BackEnd extends Construct {
     const imageHandlerLambdaFunction = new NodejsFunction(this, `ImageHandlerLambdaFunction-${this.stage}`, {
       description: `${props.solutionName} (${this.stage}-${props.solutionVersion}): Performs image edits and manipulations`,
       memorySize: 1024,
+      architecture: Architecture.ARM_64 ,
       runtime: Runtime.NODEJS_20_X,
       timeout: Duration.seconds(29),
       role: imageHandlerLambdaFunctionRole,
@@ -135,7 +136,7 @@ export class BackEnd extends Construct {
             return [];
           },
           afterBundling(inputDir: string, outputDir: string): string[] {
-            return [`cd ${outputDir}`, "rm -rf node_modules/sharp && npm install --arch=x64 --platform=linux sharp"];
+            return [`cd ${outputDir}`, "rm -rf node_modules/sharp && npm install --arch=arm64 --platform=linux sharp"];
           },
         },
       },
