@@ -39,6 +39,7 @@ export interface BackEndProps extends SolutionConstructProps {
   readonly uuid: string;
   readonly cloudFrontPriceClass: string;
   readonly createSourceBucketsResource: (key?: string) => string[];
+  // readonly createSourceBucketsResource2: (key?: string) => any;
   readonly production: boolean;
 }
 
@@ -72,12 +73,12 @@ export class BackEnd extends Construct {
         new PolicyStatement({
           //update the policy to allow the lambda function to put items
           actions: ["s3:GetObject"],
-          resources: props.createSourceBucketsResource(props.sourceBuckets),
+          resources: props.createSourceBucketsResource("/*"),
         }),
         new PolicyStatement({
           //update the policy to allow the lambda function to put items
           actions: ["s3:PutObject", "s3:PutObjectAcl"],
-          resources: props.createSourceBucketsResource(props.storageBucket),
+          resources: [`arn:aws:s3:::${props.storageBucket}/*`],
         }),
         new PolicyStatement({
           actions: ["s3:ListBucket"],

@@ -283,6 +283,39 @@ export class CustomResourcesConstruct extends Construct {
     )
   }
 
+  // public createSourceBucketsResource2(resourceName: string = "") {
+  //   return Fn.split(
+  //     ',',
+  //     Fn.sub(
+  //       `arn:aws:s3:::\${rest}${resourceName}`,
+
+  //       {
+  //         rest: Fn.join(
+  //           `${resourceName},arn:aws:s3:::`,
+  //           Fn.split(",", Fn.join("", Fn.split(" ", Fn.ref('StorageBucketParameter'))))
+  //         ),
+  //       },
+  //     ),
+  //   )
+  // }
+
+  // public createSourceBucketsResource2(resourceName: string = "") {
+  //   return Fn.sub(
+  //     "arn:aws:s3:::${rest}${resourceName}",
+  //     {
+  //       rest: Fn.join(
+  //         ",",
+  //         Fn.split(
+  //           ",", // Adjust delimiter to match your SourceBucketsParameter
+  //           Fn.ref("StorageBucketParameter")
+  //         )
+  //       ),
+  //       resourceName: resourceName ? `/${resourceName}` : ""
+  //     }
+  //   );
+  // }
+  
+
   private createCustomResource(
     id: string,
     customResourceFunction: LambdaFunction,

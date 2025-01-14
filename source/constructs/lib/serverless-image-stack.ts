@@ -195,6 +195,7 @@ export class ServerlessImageHandlerStack extends Stack {
       uuid: commonResources.customResources.uuid,
       cloudFrontPriceClass: cloudFrontPriceClassParameter.valueAsString,
       createSourceBucketsResource: commonResources.customResources.createSourceBucketsResource,
+      // createSourceBucketsResource2: commonResources.customResources.createSourceBucketsResource2,
       ...solutionConstructProps,
     });
 

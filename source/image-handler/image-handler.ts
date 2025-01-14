@@ -4,7 +4,7 @@
 import Rekognition from "aws-sdk/clients/rekognition";
 import S3 from "aws-sdk/clients/s3";
 import sharp, { FormatEnum, OverlayOptions, ResizeOptions } from "sharp";
-// import {createHash} from "crypto";
+
 import {
   BoundingBox,
   BoxSize,
@@ -17,6 +17,7 @@ import {
   RekognitionCompatibleImage,
   StatusCodes,
 } from "./lib";
+
 
 export class ImageHandler {
   private readonly LAMBDA_PAYLOAD_LIMIT = 6 * 1024 * 1024;
@@ -44,6 +45,16 @@ export class ImageHandler {
     }
 
     return image;
+  }
+
+  private async uploadFile(obj) {
+    try{
+      console.log('starting upload');
+      await this.s3Client.putObject(obj).promise();
+      console.log('upload complete')
+    }catch(err){
+      console.log("error while upload file : ", err)
+    }
   }
 
   /**
@@ -81,6 +92,29 @@ export class ImageHandler {
     const { originalImage, edits } = imageRequestInfo;
     const options = { failOnError: false, animated: imageRequestInfo.contentType === ContentTypes.GIF };
     let base64EncodedImage = "";
+    let s3PutKey = '';
+
+    try {
+      const sourceKey = imageRequestInfo.key;
+      
+      const { path, filename } = splitPathAndFilename(sourceKey);
+      
+      const transformString = imageRequestInfo.base64String.replace(sourceKey, '');
+      
+      const sanitizedTransformString = imageRequestInfo.base64String
+        ? prepareS3Key(transformString, {
+            sanitize: true,
+            base64: false,
+            partialEncode: false
+          })
+        : '';
+      
+      s3PutKey = `transform/${path}/${sanitizedTransformString}/${filename}`;
+      
+    } catch(err) {
+      console.error(err)
+    }
+
 
     // Apply edits if specified
     if (edits && Object.keys(edits).length) {
@@ -105,15 +139,17 @@ export class ImageHandler {
       const imageBuffer = await modifiedImage.toBuffer();
       base64EncodedImage = imageBuffer.toString("base64");
       // Save the processed image back to S3
-      this.s3Client.putObject({
-        Bucket: imageRequestInfo.storageBucket,
-        Key: imageRequestInfo.base64String,
-        Body: imageBuffer,
-        StorageClass: 'INTELLIGENT_TIERING',
-        Tagging: "Expires=true",
-        ContentType: imageRequestInfo.contentType,
-        CacheControl: imageRequestInfo.cacheControl,
-      }).promise();
+      if(s3PutKey){
+        await this.uploadFile({
+          Bucket: imageRequestInfo.storageBucket,
+          Key: s3PutKey,
+          Body: imageBuffer,
+          StorageClass: 'INTELLIGENT_TIERING',
+          Tagging: "Expires=true",
+          ContentType: imageRequestInfo.contentType,
+          CacheControl: imageRequestInfo.cacheControl,
+        });
+      }
     } else {
       if (imageRequestInfo.outputFormat !== undefined) {
         // convert image to Sharp and change output format if specified
@@ -121,15 +157,17 @@ export class ImageHandler {
         // convert to base64 encoded string
         const imageBuffer = await modifiedImage.toBuffer();
         base64EncodedImage = imageBuffer.toString("base64");
-        this.s3Client.putObject({
+        if(s3PutKey){
+        await this.uploadFile({
             Bucket: imageRequestInfo.storageBucket,
-            Key: imageRequestInfo.base64String,
+            Key: s3PutKey,
             Body: imageBuffer,
             StorageClass: 'INTELLIGENT_TIERING',
             Tagging: "Expires=true",
             ContentType: imageRequestInfo.contentType,
             CacheControl: imageRequestInfo.cacheControl,
-        }).promise();
+        });
+      }
       } else {
         // no edits or output format changes, convert to base64 encoded image
         base64EncodedImage = originalImage.toString("base64");
