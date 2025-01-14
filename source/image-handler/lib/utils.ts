@@ -7,7 +7,7 @@
  * @param {boolean} options.partialEncode - If true, encodes only problematic segments.
  * @returns {string} - The transformed key.
  */
-function prepareS3Key(key, options = { base64: false, sanitize: false, partialEncode: false }) {
+export const prepareS3Key = (key, options = { base64: false, sanitize: false, partialEncode: false }) => {
   if (options.base64) {
     // Base64 encode the entire key
     return Buffer.from(key).toString('base64');
@@ -28,7 +28,7 @@ function prepareS3Key(key, options = { base64: false, sanitize: false, partialEn
   return key;
 }
 
-function splitPathAndFilename(input) {
+export const splitPathAndFilename = (input) => {
   // Find the last '/' and split into path and filename
   const lastSlashIndex = input.lastIndexOf('/');
   

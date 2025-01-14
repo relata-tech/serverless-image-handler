@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.1529.0",
+    "canvas": "^3.0.1",
     "color": "4.2.3",
     "color-name": "1.1.4",
     "sharp": "^0.32.6"

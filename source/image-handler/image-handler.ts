@@ -9,15 +9,20 @@ import {
   BoundingBox,
   BoxSize,
   ContentTypes,
+  equirectToCubemapFaces,
   ImageEdits,
   ImageFitTypes,
   ImageFormatTypes,
   ImageHandlerError,
   ImageRequestInfo,
+  prepareS3Key,
   RekognitionCompatibleImage,
+  splitPathAndFilename,
   StatusCodes,
 } from "./lib";
 
+// @ts-ignore 
+const { Image } = require('canvas');
 
 export class ImageHandler {
   private readonly LAMBDA_PAYLOAD_LIMIT = 6 * 1024 * 1024;
@@ -226,6 +231,7 @@ export class ImageHandler {
   public async applyEdits(originalImage: sharp.Sharp, edits: ImageEdits, isAnimation: boolean): Promise<sharp.Sharp> {
     await this.applyResize(originalImage, edits);
 
+    console.log("🚀 ~ ImageHandler ~ applyEdits ~ edits:", edits)
     // Apply the image edits
     for (const edit in edits) {
       if (this.skipEdit(edit, isAnimation)) continue;
@@ -250,6 +256,9 @@ export class ImageHandler {
         case "crop": {
           this.applyCrop(originalImage, edits);
           break;
+        }
+        case "cubemap" : {
+          originalImage = await this.applyCubemap(originalImage, edits);
         }
         case "animated": {
           break;
@@ -528,6 +537,24 @@ export class ImageHandler {
         "Crop::AreaOutOfBounds",
         "The cropping area you provided exceeds the boundaries of the original image. Please try choosing a correct cropping value."
       );
+    }
+  }
+
+  private async applyCubemap(originalImage: sharp.Sharp, edits: ImageEdits): Promise<sharp.Sharp> {
+    try {
+      const buffer2 = await originalImage.png().toBuffer(); // Ensure a PNG format
+
+      // Create a new Canvas and Image instance
+      const img2 = new Image();
+      img2.src = buffer2;
+      // const { data, info } = await sharp(buffer)
+      // .raw()
+      // .toBuffer({ resolveWithObject: true });
+      const output = equirectToCubemapFaces(img2);
+      const buffer = output[0].toBuffer('image/png');
+      return sharp(buffer);
+    } catch (err) {
+      console.log(err)
     }
   }
 
