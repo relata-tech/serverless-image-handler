@@ -141,6 +141,7 @@ export const equirectToCubemapFaces = (function() {
 			canvas.height = image.naturalHeight || image.height;
 			ctx = canvas.getContext('2d');
 			ctx.drawImage(image, 0, 0, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+      
 		}
 		else {
 			ctx = canvas.getContext('2d');

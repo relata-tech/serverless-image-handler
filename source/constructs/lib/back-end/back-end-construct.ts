@@ -77,7 +77,7 @@ export class BackEnd extends Construct {
         }),
         new PolicyStatement({
           //update the policy to allow the lambda function to put items
-          actions: ["s3:PutObject", "s3:PutObjectAcl"],
+          actions: ["s3:PutObject", "s3:PutObjectAcl", "s3:PutObjectTagging"],
           resources: [`arn:aws:s3:::${props.storageBucket}/*`],
         }),
         new PolicyStatement({

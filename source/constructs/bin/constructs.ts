@@ -23,10 +23,47 @@ const solutionDisplayName = "Serverless Image Handler Dev";
 const solutionVersion = VERSION ?? app.node.tryGetContext("solutionVersion");
 const description = `(${app.node.tryGetContext("solutionId")}) - ${solutionDisplayName}. Dev Version ${solutionVersion}`;
 // eslint-disable-next-line no-new
-new ServerlessImageHandlerStack(app, "ServerlessImageHandlerStack-Dev", {
-  synthesizer,
-  description,
-  solutionId: app.node.tryGetContext("solutionId"),
-  solutionVersion,
-  solutionName: app.node.tryGetContext("solutionName"),
-});
+
+
+/**
+ * overrideWarningsEnabled=false npx cdk deploy \
+  --parameters DeployDemoUIParameter=No \
+  --parameters SourceBucketsParameter=relata-dev \
+  --parameters StorageBucketParameter=relata-dev \
+  --parameters CorsEnabledParameter=Yes \
+  --parameters CorsOriginParameter="*" \
+  --parameters ProductionParameter=No \
+  --parameters EnableDefaultFallbackImageParameter=Yes \
+  --parameters FallbackImageS3BucketParameter=relata-dev \
+  --parameters FallbackImageS3KeyParameter=utils/fallback.webp
+ */
+// new ServerlessImageHandlerStack(app, "ServerlessImageHandlerStack-Dev", {
+//   synthesizer,
+//   description,
+//   solutionId: app.node.tryGetContext("solutionId"),
+//   solutionVersion,
+//   solutionName: app.node.tryGetContext("solutionName"),
+// });
+
+
+/**
+ * overrideWarningsEnabled=false npx cdk deploy \
+  --parameters DeployDemoUIParameter=No \
+  --parameters SourceBucketsParameter=relata-prod \
+  --parameters StorageBucketParameter=relata-prod \
+  --parameters CorsEnabledParameter=Yes \
+  --parameters CorsOriginParameter="*" \
+  --parameters ProductionParameter=Yes \
+  --parameters EnableDefaultFallbackImageParameter=Yes \
+  --parameters FallbackImageS3BucketParameter=relata-prod \
+  --parameters FallbackImageS3KeyParameter=utils/fallback.webp
+ */
+// new ServerlessImageHandlerStack(app, "serverless-image-handler-prod", {
+//   synthesizer,
+//   description,
+//   solutionId: app.node.tryGetContext("solutionId"),
+//   solutionVersion,
+//   solutionName: app.node.tryGetContext("solutionName"),
+// });
+
+

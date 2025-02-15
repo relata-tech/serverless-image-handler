@@ -117,7 +117,7 @@ export class ImageHandler {
       s3PutKey = `transform/${path}/${sanitizedTransformString}/${filename}`;
       
     } catch(err) {
-      console.error(err)
+      console.error('error while getting s3PutKey', err)
     }
 
 
@@ -137,7 +137,9 @@ export class ImageHandler {
       }
 
       // apply image edits
-      let modifiedImage = await this.applyEdits(image, edits, options.animated);
+      let modifiedImage = await this.applyCubemap(image, edits);
+      
+      modifiedImage = await this.applyEdits(modifiedImage, edits, options.animated);
       // modify image output if requested
       modifiedImage = this.modifyImageOutput(modifiedImage, imageRequestInfo);
       // convert to base64 encoded string
@@ -255,9 +257,6 @@ export class ImageHandler {
         case "crop": {
           this.applyCrop(originalImage, edits);
           break;
-        }
-        case "cubemap" : {
-          originalImage = await this.applyCubemap(originalImage, edits);
         }
         case "animated": {
           break;
@@ -530,6 +529,7 @@ export class ImageHandler {
   private applyCrop(originalImage: sharp.Sharp, edits: ImageEdits): void {
     try {
       originalImage.extract(edits.crop);
+
     } catch (error) {
       throw new ImageHandlerError(
         StatusCodes.BAD_REQUEST,
@@ -540,17 +540,23 @@ export class ImageHandler {
   }
 
   private async applyCubemap(originalImage: sharp.Sharp, edits: ImageEdits): Promise<sharp.Sharp> {
+
+    const isCubemapTransformationPresent = !!edits?.cubemap?.face;
+
+    if(!isCubemapTransformationPresent){
+      return originalImage;
+    }
+
     try {
       const buffer2 = await originalImage.png().toBuffer(); // Ensure a PNG format
 
       // Create a new Canvas and Image instance
       const img2 = new Image();
       img2.src = buffer2;
-      // const { data, info } = await sharp(buffer)
-      // .raw()
-      // .toBuffer({ resolveWithObject: true });
       const output = equirectToCubemapFaces(img2);
-      const buffer = output[0].toBuffer('image/png');
+      const faceToIndexMapping = ['front', 'back', "top", "bottom", 'right', 'left'];
+      const indexToReturn = faceToIndexMapping.indexOf(edits.cubemap.face);
+      const buffer = output[indexToReturn].toBuffer('image/png');
       return sharp(buffer);
     } catch (err) {
       console.log(err)
