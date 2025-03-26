@@ -1,0 +1,21 @@
+overrideWarningsEnabled=false npx cdk deploy \
+  --parameters DeployDemoUIParameter=No \
+  --parameters SourceBucketsParameter=relata-prod \
+  --parameters StorageBucketParameter=relata-prod \
+  --parameters CorsEnabledParameter=Yes \
+  --parameters CorsOriginParameter="*" \
+  --parameters ProductionParameter=Yes \
+  --parameters EnableDefaultFallbackImageParameter=Yes \
+  --parameters FallbackImageS3BucketParameter=relata-prod \
+  --parameters FallbackImageS3KeyParameter=utils/fallback.webp
+
+overrideWarningsEnabled=false npx cdk deploy \
+  --parameters DeployDemoUIParameter=No \
+  --parameters SourceBucketsParameter=relata-dev \
+  --parameters StorageBucketParameter=relata-dev \
+  --parameters CorsEnabledParameter=Yes \
+  --parameters CorsOriginParameter="*" \
+  --parameters ProductionParameter=No \
+  --parameters EnableDefaultFallbackImageParameter=Yes \
+  --parameters FallbackImageS3BucketParameter=relata-dev \
+  --parameters FallbackImageS3KeyParameter=utils/fallback.webp
