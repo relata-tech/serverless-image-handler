@@ -40,14 +40,22 @@ export class ImageHandler {
   private async instantiateSharpImage(originalImage: Buffer, edits: ImageEdits, options: Object): Promise<sharp.Sharp> {
     let image: sharp.Sharp = null;
 
-    if (edits.rotate !== undefined && edits.rotate === null) {
-      image = sharp(originalImage, options);
-    } else {
-      const metadata = await sharp(originalImage, options).metadata();
-      image = metadata.orientation
-        ? sharp(originalImage, options).withMetadata({ orientation: metadata.orientation })
-        : sharp(originalImage, options).withMetadata();
-    }
+    // ref - https://relataio.slack.com/files/U064R6WTE57/F08PS54U7BM/video-2025-04-25-12-56-43.mov
+    // https://relataio.slack.com/archives/C08LSC42XGD/p1745566904455549
+    /**
+      // Using .rotate() to auto-correct image orientation based on EXIF metadata.
+      // Avoiding .withMetadata() here as it was causing inconsistent orientation behavior
+      // across formats (e.g., JPEG vs WebP), especially for images captured on iPhones.
+      // This setup ensures more consistent results regardless of source or output format.
+    */
+    image = sharp(originalImage, options).rotate();
+    // } 
+    // else {
+    //   const metadata = await sharp(originalImage, options).metadata();
+    //   image = metadata.orientation
+    //     ? sharp(originalImage, options).withMetadata({ orientation: metadata.orientation })
+    //     : sharp(originalImage, options).withMetadata();
+    // }
 
     return image;
   }
